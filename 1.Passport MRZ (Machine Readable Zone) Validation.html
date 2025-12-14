@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MRZ Passport Number Check</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .title {
+            color: #2d3748;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: #718096;
+            font-size: 16px;
+            font-weight: 400;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        .input-label {
+            display: block;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 500;
+            color: #2d3748;
+            background: #f7fafc;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .input-field::placeholder {
+            color: #a0aec0;
+            font-weight: 400;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+        
+        .info-box {
+            margin-bottom: 25px;
+            padding: 16px;
+            background: #f0f9ff;
+            border-radius: 12px;
+            border: 1px solid #bee0ff;
+        }
+        
+        .info-title {
+            color: #1e3a8a;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-text {
+            color: #4b5563;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .result-box {
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .result-box.waiting {
+            background: #f7fafc;
+            border: 2px dashed #e2e8f0;
+            color: #a0aec0;
+        }
+        
+        .result-box.valid {
+            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+            color: #1f2937;
+            border: 2px solid #86efac;
+        }
+        
+        .result-box.invalid {
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            color: #7f1d1d;
+            border: 2px solid #fca5a5;
+        }
+        
+        .result-box.calc {
+            background: linear-gradient(135deg, #a5b4fc 0%, #c4b5fd 100%);
+            color: #1e3a8a;
+            border: 2px solid #a5b4fc;
+        }
+        
+        .result-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .result-details {
+            font-size: 18px;
+            font-weight: 500;
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .examples {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .examples-title {
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        
+        .example-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #edf2f7;
+        }
+        
+        .example-item:last-child {
+            border-bottom: none;
+        }
+        
+        .example-number {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .example-click {
+            color: #667eea;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s;
+            font-size: 14px;
+        }
+        
+        .example-click:hover {
+            color: #764ba2;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .btn {
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .btn-secondary:hover {
+            background: #edf2f7;
+        }
+        
+        .icon {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .key-hint {
+            display: inline-block;
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+            font-weight: 600;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #a0aec0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+            
+            .buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">MRZ Passport Number Check</h1>
+            <p class="subtitle">Validate passport numbers using MRZ check digit algorithm</p>
+        </div>
+        
+        <div class="input-group">
+            <label class="input-label">PASSPORT NUMBER <span class="key-hint">Press Enter ⏎</span></label>
+            <input type="text" id="passportInput" class="input-field" 
+                   placeholder="Enter 9 or 10 characters (e.g., 123456789)"
+                   maxlength="10" autocomplete="off" autocorrect="off" autocapitalize="characters">
+        </div>
+        
+        <div class="info-box">
+            <div class="info-title">
+                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                </svg>
+                MRZ Check Digit Algorithm
+            </div>
+            <p class="info-text">
+                Enter 9 characters to calculate the check digit, or 10 characters to validate.<br>
+                Characters allowed: A-Z and 0-9. Weights used: [7, 3, 1].<br>
+                <strong>Tip:</strong> Press Enter key or click Check button to validate.
+            </p>
+        </div>
+        
+        <div class="examples">
+            <div class="examples-title">Try these examples (click to fill):</div>
+            <div class="example-item">
+                <span class="example-number">123456789</span>
+                <span class="example-click" onclick="useExample('123456789')">Calculate check digit →</span>
+            </div>
+            <div class="example-item">
+                <span class="example-number">1234567890</span>
+                <span class="example-click" onclick="useExample('1234567890')">Validate →</span>
+            </div>
+            <div class="example-item">
+                <span class="example-number">AB1234567</span>
+                <span class="example-click" onclick="useExample('AB1234567')">Test with letters →</span>
+            </div>
+        </div>
+        
+        <div id="resultBox" class="result-box waiting">
+            <div id="resultTitle" class="result-title">Waiting for Input</div>
+            <div id="resultDetails" class="result-details">Enter a passport number above</div>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn btn-primary" onclick="checkPassport()">
+                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                Check Passport <span class="key-hint">Enter ⏎</span>
+            </button>
+            <button class="btn btn-secondary" onclick="clearInput()">
+                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
+                Clear <span class="key-hint">Esc</span>
+            </button>
+        </div>
+        
+        <div class="footer">
+            <p>This tool validates passport numbers using the ICAO 9303 MRZ check digit algorithm.</p>
+            <p>Format: 9 characters for calculation, 10 characters for validation (includes check digit).</p>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('passportInput');
+        const resultBox = document.getElementById('resultBox');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultDetails = document.getElementById('resultDetails');
+        
+        // Function to use example
+        function useExample(value) {
+            input.value = value;
+            checkPassport();
+            input.focus();
+        }
+        
+        // Function to clear input
+        function clearInput() {
+            input.value = '';
+            setResult('waiting', 'Waiting for Input', 'Enter a passport number above');
+            input.focus();
+        }
+        
+        // Function to set result
+        function setResult(type, title, details) {
+            resultBox.className = 'result-box ' + type;
+            resultTitle.textContent = title;
+            resultDetails.textContent = details;
+        }
+        
+        // Main check function
+        function checkPassport() {
+            const raw = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            const length = raw.length;
+            
+            if (length < 1) {
+                setResult('waiting', 'Waiting for Input', 'Enter a passport number above');
+                return;
+            }
+            
+            if (length !== 9 && length !== 10) {
+                setResult('invalid', '❌ Invalid Input', 'Passport number must be exactly 9 or 10 characters');
+                return;
+            }
+            
+            const data = length === 10 ? raw.slice(0, 9) : raw;
+            const checkDigit = length === 10 ? raw.charAt(9) : null;
+            const weights = [7, 3, 1];
+            let sum = 0;
+            
+            // Calculate check digit
+            for (let i = 0; i < 9; i++) {
+                const char = data.charAt(i);
+                let value;
+                
+                if (char >= '0' && char <= '9') {
+                    value = parseInt(char, 10);
+                } else if (char >= 'A' && char <= 'Z') {
+                    value = char.charCodeAt(0) - 55; // A=10, B=11, ..., Z=35
+                } else {
+                    setResult('invalid', '❌ Invalid Character', `Character '${char}' is not allowed`);
+                    return;
+                }
+                
+                sum += value * weights[i % 3];
+            }
+            
+            const calculated = (sum % 10).toString();
+            
+            if (length === 9) {
+                setResult('calc', '✅ Check Digit Calculated', 
+                         `For "${data}", check digit is: ${calculated}`);
+            } else {
+                if (calculated === checkDigit) {
+                    setResult('valid', '✅ VALID Passport Number',
+                             `Check digit matches! Calculated: ${calculated}, Original: ${checkDigit}`);
+                } else {
+                    setResult('invalid', '❌ INVALID Passport Number',
+                             `Check digit mismatch! Calculated: ${calculated}, Original: ${checkDigit}`);
+                }
+            }
+        }
+        
+        // Event listeners
+        input.addEventListener('input', function() {
+            // Auto-uppercase and filter
+            this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            
+            // Auto-check when reaching 9 or 10 characters
+            if (this.value.length === 9 || this.value.length === 10) {
+                checkPassport();
+            } else if (this.value.length > 10) {
+                // Truncate to 10 characters
+                this.value = this.value.substring(0, 10);
+                checkPassport();
+            } else if (this.value.length > 0) {
+                setResult('waiting', 'Continue Entering', 
+                         `${this.value.length}/9 characters (need 9 or 10)`);
+            } else {
+                setResult('waiting', 'Waiting for Input', 'Enter a passport number above');
+            }
+        });
+        
+        // 回车键触发检查（和Check按钮功能相同）
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // 防止表单提交（如果有的话）
+                checkPassport();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                clearInput();
+            } else if (e.key === 'Tab') {
+                // 允许Tab键正常切换焦点
+                return;
+            }
+        });
+        
+        // 为整个页面添加键盘监听，让Esc键在任何地方都能清空输入
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && input !== document.activeElement) {
+                clearInput();
+            }
+        });
+        
+        // 点击Check按钮的备用方法
+        document.querySelector('.btn-primary').addEventListener('click', function(e) {
+            checkPassport();
+        });
+        
+        // 点击Clear按钮的备用方法
+        document.querySelector('.btn-secondary').addEventListener('click', function(e) {
+            clearInput();
+        });
+        
+        // Focus input on load
+        input.focus();
+        
+        // 添加视觉反馈：当按钮被点击时
+        document.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('mousedown', function() {
+                this.style.transform = 'translateY(0)';
+            });
+            button.addEventListener('mouseup', function() {
+                this.style.transform = '';
+            });
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+            });
+        });
+    </script>
+</body>
+</html>

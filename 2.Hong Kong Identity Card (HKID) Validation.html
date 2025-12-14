@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>HKID Validator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.4;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: normal;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0 20px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #666;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            flex: 1;
+            padding: 10px;
+            background: white;
+            color: black;
+            border: 1px solid #333;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: #333;
+            color: white;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            min-height: 24px;
+            text-align: center;
+            border: 1px solid #eee;
+        }
+        .info {
+            font-size: 13px;
+            color: #666;
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+        .example {
+            background: #f8f8f8;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>HKID Validator</h2>
+        <input type="text" id="hkidInput" placeholder="Enter HKID (e.g., K562504)" />
+        
+        <div class="button-group">
+            <button onclick="calculate()">Calculate Check Digit</button>
+            <button onclick="clearInput()">Clear</button>
+        </div>
+        
+        <div id="result">Enter HKID to calculate</div>
+        
+        <div class="info">
+            <strong>Format:</strong> First letter + 6 digits
+            <div class="example">Examples: K562504, A123456, Z987654</div>
+            Enter the first 7 characters to calculate the check digit in parentheses.
+        </div>
+    </div>
+
+    <script>
+        function calculate() {
+            var raw = document.getElementById('hkidInput').value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+            var resultDiv = document.getElementById('result');
+            
+            // Clear previous result
+            resultDiv.style.color = '#333';
+            
+            // Validation
+            if (raw.length > 8 || raw.length < 7) {
+                resultDiv.textContent = "Invalid: Please enter 7-8 characters";
+                resultDiv.style.color = "#cc0000";
+                return;
+            }
+            
+            var r = raw.slice(0, 7);
+            if (/[A-Z]/.test(r[1])) {
+                resultDiv.textContent = "Invalid: Second character must be a digit";
+                resultDiv.style.color = "#cc0000";
+                return;
+            }
+            
+            var firstLetter = r[0];
+            var numbers = r.slice(1).replace(/\D/g, "");
+            
+            if (numbers.length !== 6) {
+                resultDiv.textContent = "Invalid: Need 6 digits after the letter";
+                resultDiv.style.color = "#cc0000";
+                return;
+            }
+            
+            // Letter value calculation
+            function letterValue(c) {
+                return c.charCodeAt(0) - 64; // A=1, B=2, ...
+            }
+            
+            // Weights
+            var weights = [9, 8, 7, 6, 5, 4, 3];
+            var values = [letterValue(firstLetter)].concat(numbers.split("").map(Number));
+            
+            // Calculate weighted sum
+            var sum = 0;
+            for (var i = 0; i < 7; i++) {
+                sum += values[i] * weights[i];
+            }
+            
+            // Calculate check digit
+            var remainder = sum % 11;
+            var checkDigit = remainder === 0 ? "0" : (remainder === 1 ? "A" : String(11 - remainder));
+            
+            // Display result
+            var fullHkid = firstLetter + numbers + "(" + checkDigit + ")";
+            resultDiv.textContent = "Complete HKID: " + fullHkid;
+            resultDiv.style.color = "#006600";
+        }
+        
+        function clearInput() {
+            document.getElementById('hkidInput').value = "";
+            document.getElementById('result').textContent = "Enter HKID to calculate";
+            document.getElementById('result').style.color = "#333";
+        }
+        
+        // Calculate on Enter key
+        document.getElementById('hkidInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                calculate();
+            }
+        });
+        
+        // Auto-uppercase input
+        document.getElementById('hkidInput').addEventListener('input', function(e) {
+            var cursorPos = this.selectionStart;
+            this.value = this.value.toUpperCase();
+            this.setSelectionRange(cursorPos, cursorPos);
+        });
+    </script>
+</body>
+</html>

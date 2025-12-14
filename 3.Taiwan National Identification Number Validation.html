@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台湾身份证验证器</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 95%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            text-transform: uppercase; /* 确保首字母大写 */
+        }
+        .result-box {
+            background-color: #e6f7ff;
+            border: 1px solid #b3e0ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #cce7ff;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .result-label {
+            font-weight: bold;
+            color: #0056b3;
+        }
+        .result-value {
+            font-weight: bold;
+            color: #d9534f; /* 突出显示计算结果 */
+            font-size: 1.1em;
+        }
+        .validation-message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .valid {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .invalid {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info-message {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🇹🇼 台湾身份证验证器</h1>
+        
+        <div class="input-group">
+            <label for="nidInput">请输入身份证号码 (NID#)：</label>
+            <input type="text" id="nidInput" maxlength="10" placeholder="例如：A123456789">
+        </div>
+
+        <div class="result-box">
+            <div class="result-item">
+                <span class="result-label">通算值 (Sum Value):</span>
+                <span class="result-value" id="sumValue"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">末位校验码 (Check Code):</span>
+                <span class="result-value" id="checkCode"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">身份证末位数字:</span>
+                <span class="result-value" id="lastDigit"></span>
+            </div>
+        </div>
+
+        <div class="validation-message" id="validationMessage">
+            </div>
+
+        <p class="info-message">
+            性别码：男性为 1，女性为 2
+        </p>
+
+    </div>
+
+    <script>
+        // 根据您上传的图片构建查找表（英文：验证码）
+        const areaCodeTable = {
+            'A': 10, 'B': 11, 'C': 12, 'D': 13, 'E': 14, 'F': 15, 
+            'G': 16, 'H': 17, 'I': 34, 'J': 18, 'K': 19, 'L': 20, 
+            'M': 21, 'N': 22, 'O': 35, 'P': 23, 'Q': 24, 'R': 25, 
+            'S': 26, 'T': 27, 'U': 28, 'V': 29, 'W': 32, 'X': 30, 
+            'Y': 31, 'Z': 33
+        };
+
+        const nidInput = document.getElementById('nidInput');
+        const sumValueDisplay = document.getElementById('sumValue');
+        const checkCodeDisplay = document.getElementById('checkCode');
+        const lastDigitDisplay = document.getElementById('lastDigit');
+        const validationMessage = document.getElementById('validationMessage');
+
+        // 绑定输入事件
+        nidInput.addEventListener('input', validateNID);
+        nidInput.addEventListener('change', validateNID); // 确保在输入完成后也触发
+
+        function validateNID() {
+            // 清理输入并转为大写
+            let nid = nidInput.value.trim().toUpperCase();
+            nidInput.value = nid; // 更新输入框的值为大写
+
+            // 1. 验证格式
+            // 必须是10位，首位是字母，第二位是1或2，其余是数字
+            if (!/^[A-Z][12]\d{8}$/.test(nid)) {
+                // 清空结果显示
+                sumValueDisplay.textContent = '---';
+                checkCodeDisplay.textContent = '---';
+                lastDigitDisplay.textContent = '---';
+                validationMessage.className = 'validation-message';
+                validationMessage.textContent = '请输入正确的台湾身份证号码格式 (10位，首字母，第二位1/2，后8位数字)';
+                return; // 格式不正确则停止计算
+            }
+
+            // 提取首字母和验证码
+            const firstChar = nid.charAt(0);
+            const areaCodeStr = String(areaCodeTable[firstChar]); // VLOOKUP(LEFT(F2,1),$A:$C,3,0)
+
+            // 如果找不到区码，理论上不应该发生，但为了健壮性
+            if (!areaCodeStr) {
+                sumValueDisplay.textContent = '---';
+                checkCodeDisplay.textContent = '---';
+                lastDigitDisplay.textContent = '---';
+                validationMessage.className = 'validation-message invalid';
+                validationMessage.textContent = `错误：找不到字母 ${firstChar} 的区码。`;
+                return;
+            }
+
+            // 2. 计算通算值（Sum Value）
+            // 公式：MID(VLOOKUP(..),1,1) + MID(VLOOKUP(..),2,1)*9 + MID(F2,2,1)*8 + ... + MID(F2,9,1)*1
+            
+            // 地区码第一位 (A0)
+            const w1 = parseInt(areaCodeStr.charAt(0)) || 0; // MID(VLOOKUP(..),1,1)
+            // 地区码第二位 (A1)
+            const w2 = parseInt(areaCodeStr.charAt(1)) || 0; // MID(VLOOKUP(..),2,1)
+
+            // 提取身份证数字部分 (2-9位)
+            const N2 = parseInt(nid.charAt(1)); // N2 (性别码)
+            const N3 = parseInt(nid.charAt(2));
+            const N4 = parseInt(nid.charAt(3));
+            const N5 = parseInt(nid.charAt(4));
+            const N6 = parseInt(nid.charAt(5));
+            const N7 = parseInt(nid.charAt(6));
+            const N8 = parseInt(nid.charAt(7));
+            const N9 = parseInt(nid.charAt(8));
+            const N10 = parseInt(nid.charAt(9)); // 身份证末位数字（用于比较）
+
+            // 执行加权求和
+            const sumValue = (w1 * 1) + 
+                             (w2 * 9) + 
+                             (N2 * 8) + 
+                             (N3 * 7) + 
+                             (N4 * 6) + 
+                             (N5 * 5) + 
+                             (N6 * 4) + 
+                             (N7 * 3) + 
+                             (N8 * 2) + 
+                             (N9 * 1); // 注意：Excel公式中只计算到N9
+
+            sumValueDisplay.textContent = sumValue;
+
+            // 3. 计算末位校验码（Check Code）
+            // 公式：=IFERROR(IF(RIGHT(F3,1)="0",RIGHT(F3,1),10-RIGHT(F3,1)),"")
+            // F3 是通算值，RIGHT(F3,1) 是通算值末尾数字，即 sumValue % 10
+            
+            const remainder = sumValue % 10; // 通算值末尾数字 (RIGHT(F3,1))
+            let checkCode;
+
+            if (remainder === 0) {
+                // 如果通算值末尾是 0
+                checkCode = 0; // RIGHT(F3,1)
+            } else {
+                // 如果通算值末尾不是 0
+                checkCode = 10 - remainder; // 10-RIGHT(F3,1)
+            }
+
+            checkCodeDisplay.textContent = checkCode;
+            lastDigitDisplay.textContent = N10; // 身份证末位数字
+
+            // 4. 验证结果
+            if (N10 === checkCode) {
+                validationMessage.className = 'validation-message valid';
+                validationMessage.textContent = '✅ 校验成功！该身份证号码通过验证。';
+            } else {
+                validationMessage.className = 'validation-message invalid';
+                validationMessage.textContent = `❌ 校验失败！末位数字 (${N10}) 与计算出的校验码 (${checkCode}) 不匹配。`;
+            }
+        }
+        
+        // 初始运行一次，以设置默认显示
+        validateNID();
+    </script>
+
+</body>
+</html>

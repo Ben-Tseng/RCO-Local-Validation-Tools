@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DOB Date Difference Validator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6f7;
+      padding: 30px;
+      color: #000;
+    }
+    .card {
+      background: #fff;
+      max-width: 520px;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 6px;
+      font-size: 14px;
+    }
+    button {
+      margin-top: 16px;
+      padding: 10px 16px;
+      font-size: 14px;
+      border: none;
+      border-radius: 8px;
+      background: #2c7be5;
+      color: #fff;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 20px;
+      border-top: 1px solid #ddd;
+      padding-top: 16px;
+    }
+    .row {
+      margin-bottom: 8px;
+    }
+    .label {
+      display: inline-block;
+      width: 120px;
+      font-weight: bold;
+    }
+    .all {
+      margin-top: 10px;
+      padding: 10px;
+      background: #fff3b0;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>DOB / Issuing Date Validator</h2>
+
+    <label>Start date (DOB)</label>
+    <input type="text" id="start" placeholder="YYYYMMDD" />
+
+    <label>End date (Issuing date)</label>
+    <input type="text" id="end" placeholder="YYYYMMDD" />
+
+    <button onclick="calc()">Calculate</button>
+
+    <div class="result" id="result" style="display:none">
+      <div class="row"><span class="label">Years:</span><span id="y"></span></div>
+      <div class="row"><span class="label">Months:</span><span id="m"></span></div>
+      <div class="row"><span class="label">Days:</span><span id="d"></span></div>
+      <div class="all" id="all"></div>
+    </div>
+  </div>
+
+  <script>
+    function parseYYYYMMDD(v) {
+      if (!/^\d{8}$/.test(v)) return null;
+      const y = +v.slice(0,4);
+      const m = +v.slice(4,6) - 1;
+      const d = +v.slice(6,8);
+      const dt = new Date(y, m, d);
+      if (
+        dt.getFullYear() !== y ||
+        dt.getMonth() !== m ||
+        dt.getDate() !== d
+      ) return null;
+      return dt;
+    }
+
+    // Excel: =DATEDIF(D2,E2,"y")
+    function datedifY(start, end) {
+      let y = end.getFullYear() - start.getFullYear();
+      if (
+        end.getMonth() < start.getMonth() ||
+        (end.getMonth() === start.getMonth() && end.getDate() < start.getDate())
+      ) {
+        y--;
+      }
+      return y;
+    }
+
+    // Excel: =DATEDIF(D2,E2,"ym")
+    function datedifYM(start, end) {
+      let m = end.getMonth() - start.getMonth();
+      if (end.getDate() < start.getDate()) m--;
+      if (m < 0) m += 12;
+      return m;
+    }
+
+    // Excel: =E2 - DATE(YEAR(E2), MONTH(E2), 1)
+    function excelDays(end) {
+      const first = new Date(end.getFullYear(), end.getMonth(), 1);
+      return Math.floor((end - first) / 86400000);
+    }
+
+    function calc() {
+      const s = document.getElementById("start").value.trim();
+      const e = document.getElementById("end").value.trim();
+
+      const start = parseYYYYMMDD(s);
+      const end = parseYYYYMMDD(e);
+
+      if (!start || !end) {
+        alert("Invalid date format. Use YYYYMMDD");
+        return;
+      }
+      if (end < start) {
+        alert("End date must be after start date");
+        return;
+      }
+
+      const y = datedifY(start, end);
+      const m = datedifYM(start, end);
+      const d = excelDays(end);
+
+      document.getElementById("y").innerText = y;
+      document.getElementById("m").innerText = m;
+      document.getElementById("d").innerText = d;
+      document.getElementById("all").innerText =
+        y + "years," + m + "months," + d + "days";
+
+      document.getElementById("result").style.display = "block";
+    }
+  </script>
+</body>
+</html>

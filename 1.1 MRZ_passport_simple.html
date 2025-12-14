@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MRZ Passport Check</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #tool { width: 350px; padding: 20px; background: #f0f8ff; border-radius: 10px; }
+        input { width: 100%; padding: 8px; margin: 10px 0; }
+        #output { padding: 10px; background: #f8f8f8; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div id="tool">
+        <h3>MRZ Passport Check</h3>
+        <input id="input" placeholder="Enter 9 or 10 characters">
+        <div id="output">Ready</div>
+        <button onclick="check()">Check</button>
+        <button onclick="window.close()">Close</button>
+    </div>
+    <script>
+    function check() {
+        var v = document.getElementById('input').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        var l = v.length;
+        var o = document.getElementById('output');
+        
+        if (l !== 9 && l !== 10) {
+            o.innerHTML = '<span style="color:red">Need 9 or 10 characters</span>';
+            return;
+        }
+        
+        var data = l === 10 ? v.slice(0, 9) : v;
+        var checkDigit = l === 10 ? v.charAt(9) : null;
+        var weights = [7, 3, 1];
+        var sum = 0;
+        
+        for (var i = 0; i < 9; i++) {
+            var ch = data.charAt(i);
+            var val;
+            if (ch >= '0' && ch <= '9') {
+                val = parseInt(ch, 10);
+            } else if (ch >= 'A' && ch <= 'Z') {
+                val = ch.charCodeAt(0) - 55; // A=10, B=11, etc.
+            } else {
+                o.innerHTML = '<span style="color:red">Invalid character</span>';
+                return;
+            }
+            sum += val * weights[i % 3];
+        }
+        
+        var calc = (sum % 10).toString();
+        
+        if (l === 9) {
+            o.innerHTML = 'Check digit: <b>' + calc + '</b>';
+        } else {
+            if (calc === checkDigit) {
+                o.innerHTML = '<span style="color:green">VALID: ' + calc + ' = ' + checkDigit + '</span>';
+            } else {
+                o.innerHTML = '<span style="color:red">INVALID: ' + calc + ' ≠ ' + checkDigit + '</span>';
+            }
+        }
+    }
+    </script>
+</body>
+</html>
