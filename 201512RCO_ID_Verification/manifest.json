@@ -1,0 +1,16 @@
+{
+"manifest_version": 3,
+"name": "Lightweight KYC Validator",
+"version": "1.0",
+"description": "Right-click validation for MRZ, HK ID and TW ID (offline only)",
+"icons": {
+	"16": "icon.png",
+	"48": "icon.png",
+	"128": "icon.png"
+},
+"permissions": ["contextMenus", "activeTab", "scripting"],
+"host_permissions": ["<all_urls>"],
+"background": {
+"service_worker": "background.js"
+}
+}
