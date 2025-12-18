@@ -1,3 +1,5 @@
+https://chromewebstore.google.com/detail/lightweight-kyc-validator/ojmejpmlpghbdnkgafipadelkocajlgb
+
 # RCO-Local-Validation-Tools
 Passport MRZ, HK ID, TW ID and Chinese ID verification assisted tool
 
